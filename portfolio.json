@@ -1,0 +1,18 @@
+{
+  "stocks": {
+    "SPY": {
+      "quantity": 1
+    },
+    "GOOG": {
+      "quantity": 1
+    }
+  },
+  "cryptos": {
+    "BTC": {
+      "quantity": 0.01
+    },
+    "ETH": {
+      "quantity": 1
+    }
+  }
+}
