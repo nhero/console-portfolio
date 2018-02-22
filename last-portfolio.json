@@ -1,0 +1,21 @@
+{
+  "stocks": {
+    "SPY": {
+      "lastPrice": 271.24
+    },
+    "GOOG": {
+      "lastPrice": 1108.98
+    }
+  },
+  "cryptos": {
+    "BTC": {
+      "lastPrice": 9884.61
+    },
+    "ETH": {
+      "lastPrice": 806.77
+    }
+  },
+  "stocksTotal": 1380.22,
+  "cryptosTotal": 905.6161,
+  "grandTotal": 2285.84
+}
