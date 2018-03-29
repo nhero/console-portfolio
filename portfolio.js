@@ -1,5 +1,5 @@
 const moment = require('moment');
-const googleStocks = require('google-stocks');
+const yahooFinance = require('yahoo-finance');
 const numeral = require('numeral');
 const cc = require('cryptocompare');
 const columnify = require('columnify')
@@ -41,13 +41,13 @@ if (portfolio.hasOwnProperty('cryptos')) {
   }
 }
 
-let getStocks = googleStocks(stocks)
-  .then(function(data) {
-    return data;
-  })
-  .catch(function(error) {
-    /* error logic */
-  });
+let getStocks = yahooFinance.quote({
+  symbols: stocks,
+  modules: [ 'price', 'summaryDetail' ] // see the docs for the full list
+}, function (err, quotes) {
+  //console.log(quotes);
+  return quotes;
+});
 
 let getCryptos = cc.priceMulti(cryptos, ['USD'])
   .then(prices => {
@@ -57,7 +57,8 @@ let getCryptos = cc.priceMulti(cryptos, ['USD'])
 
 let getColor = (lastPrice, price) => {
   switch(true) {
-    case (lastPrice == null):
+    case (lastPrice
+      == null):
       color = 'none';
       break;
     case (lastPrice > price):
@@ -86,20 +87,19 @@ let log = (stockData, cryptoData) => {
   let stocksTotal = 0;
   console.log('-STOCKS-');
   for(let stock in stockData) {
-    let symbol = stockData[stock].symbol;
-    let padding = width - (symbol.length + stockData[stock].l.length);
-    let price = stockData[stock].l;
-    let leftPad =  10 - symbol.length;
-    let lastPrice = (lastPortfolio.stocks[symbol] && lastPortfolio.stocks[symbol].lastPrice) ? lastPortfolio.stocks[symbol].lastPrice : null;
+    let padding = width - (stock.length + stockData[stock].price.regularMarketPrice.length);
+    let price = numeral(stockData[stock].price.regularMarketPrice).format('1,000.00');
+    let leftPad =  10 - stock.length;
+    let lastPrice = (lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
 
-    stocks[symbol] = {
+    stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
     };
 
     let color = getColor(lastPrice, price.replace(/[^\d\.]/g,''));
     price += '';
-    console.log(`${symbol.padEnd(10)} | ${colorize(color, price.padStart(12))}`);
-    stocksTotal += portfolio.stocks[symbol]['quantity'] * stockData[stock].l.replace(/[^\d\.]/g,'');
+    console.log(`${stock.padEnd(10)} | ${colorize(color, price.padStart(12))}`);
+    stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
   }
 
   let cryptosTotal = 0;
