@@ -99,7 +99,9 @@ let log = (stockData, cryptoData) => {
     let color = getColor(lastPrice, price.replace(/[^\d\.]/g,''));
     price += '';
     console.log(`${stock.padEnd(10)} | ${colorize(color, price.padStart(12))}`);
-    stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
+    if (portfolio.stocks[stock]['quantity']) {
+      stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');      
+    }
   }
 
   let cryptosTotal = 0;
