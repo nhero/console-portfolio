@@ -1,7 +1,6 @@
 const moment = require('moment');
 const yahooFinance = require('yahoo-finance');
 const numeral = require('numeral');
-const cc = require('cryptocompare');
 const columnify = require('columnify')
 const fs = require('fs');
 global.fetch = require('node-fetch');
@@ -12,7 +11,6 @@ const date = moment().format('MM/DD/YYYY hh:mm');
 const width = 25;
 
 let stocks = [];
-let cryptos = [];
 
 let divider = () => {
   console.log('-'.repeat(width));
@@ -35,25 +33,12 @@ if (portfolio.hasOwnProperty('stocks')) {
   }
 }
 
-if (portfolio.hasOwnProperty('cryptos')) {
-  for(let crypto in portfolio.cryptos) {
-    cryptos.push(crypto);
-  }
-}
-
 let getStocks = yahooFinance.quote({
   symbols: stocks,
   modules: [ 'price', 'summaryDetail' ] // see the docs for the full list
 }, function (err, quotes) {
-  //console.log(quotes);
   return quotes;
 });
-
-let getCryptos = cc.priceMulti(cryptos, ['USD'])
-  .then(prices => {
-    return prices;
-})
-.catch(console.error);
 
 let getColor = (lastPrice, price) => {
   switch(true) {
@@ -77,13 +62,12 @@ let getColor = (lastPrice, price) => {
   return color;
 }
 
-let log = (stockData, cryptoData) => {
+let log = (stockData) => {
   console.log();
   divider();
   console.log(`${'Date:'.padEnd(8)} ${date}`);
   divider();
   let stocks = {};
-  let cryptos = {};
   let stocksTotal = 0;
   console.log('-STOCKS-');
   for(let stock in stockData) {
@@ -100,57 +84,36 @@ let log = (stockData, cryptoData) => {
     price += '';
     console.log(`${stock.padEnd(10)} | ${colorize(color, price.padStart(12))}`);
     if (portfolio.stocks[stock]['quantity']) {
-      stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');      
+      stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
     }
-  }
-
-  let cryptosTotal = 0;
-  divider();
-  console.log('-CRYPTOS-');
-  for (const [crypto, value] of Object.entries(cryptoData)) {
-    let price = value['USD'];
-    let lastPrice = (lastPortfolio.cryptos[crypto] && lastPortfolio.cryptos[crypto].lastPrice) ? lastPortfolio.cryptos[crypto].lastPrice : null;
-    let color = getColor(lastPrice, price);
-    let val = numeral(value['USD']).format('1,000.0000');
-    console.log(`${crypto.padEnd(10)} | ${colorize(color, val.padStart(12))}`);
-    cryptosTotal += value['USD'] * portfolio.cryptos[crypto]['quantity'];
-    cryptos[crypto] = {
-      'lastPrice': value['USD']
-    };
   }
 
   lastData = {
     stocks,
-    cryptos,
     'stocksTotal': stocksTotal,
-    'cryptosTotal': cryptosTotal,
-    'grandTotal': parseFloat(numeral(stocksTotal + cryptosTotal).format('1000.00'))
+    'grandTotal': parseFloat(numeral(stocksTotal).format('1000.00'))
   };
   let jsonData = JSON.stringify(lastData, null, 2);
   fs.writeFileSync('last-portfolio.json', jsonData);
 
   const lastGrandTotal = lastPortfolio.grandTotal;
   const lastStocksTotal = lastPortfolio.stocksTotal;
-  const lastCryptosTotal = lastPortfolio.cryptosTotal;
-  let grandColor = getColor(lastGrandTotal, stocksTotal + cryptosTotal);
+  let grandColor = getColor(lastGrandTotal, stocksTotal);
   let stocksColor = getColor(lastStocksTotal, stocksTotal);
-  let cryptosColor = getColor(lastCryptosTotal, cryptosTotal);
-  const grandTotal = numeral(stocksTotal + cryptosTotal).format('1,000.00');
+  const grandTotal = numeral(stocksTotal).format('1,000.00');
 
-  cryptosTotal = numeral(cryptosTotal).format('1,000.00');
   stocksTotal = numeral(stocksTotal).format('1,000.00');
   divider();
   console.log(`Stocks Total: $${colorize(stocksColor, stocksTotal.padStart(10))}`);
-  console.log(`Crypto Total: $${colorize(cryptosColor, cryptosTotal.padStart(10))}`);
   divider();
   console.log(`Grand Total:  $${colorize(grandColor, grandTotal.padStart(10))}`);
   divider();
   console.log();
 }
 
-Promise.all([getStocks, getCryptos])
-.then(function([stockData, cryptoData]){
-  log(stockData, cryptoData);
+Promise.all([getStocks])
+.then(function([stockData]){
+  log(stockData);
 })
 .catch(function(err){
   console.error('Promise.all error', err);
