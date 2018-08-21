@@ -89,7 +89,6 @@ let log = (stockData) => {
   divider();
   let stocks = {};
   let stocksTotal = 0;
-  console.log('-STOCKS-');
   for(let stock in stockData) {
     let padding = width - (stock.length + stockData[stock].price.regularMarketPrice.length);
     let price = numeral(stockData[stock].price.regularMarketPrice).format('1,000.00');
@@ -114,19 +113,14 @@ let log = (stockData) => {
     'grandTotal': parseFloat(numeral(stocksTotal).format('1000.00'))
   };
   let jsonData = JSON.stringify(lastData, null, 2);
-  fs.writeFileSync(lastfile, jsonData);
+  fs.writeFileSync(portfolios + lastfile, jsonData);
 
-  const lastGrandTotal = lastPortfolio.grandTotal;
   const lastStocksTotal = lastPortfolio.stocksTotal;
-  let grandColor = getColor(lastGrandTotal, stocksTotal);
   let stocksColor = getColor(lastStocksTotal, stocksTotal);
-  const grandTotal = numeral(stocksTotal).format('1,000.00');
-
   stocksTotal = numeral(stocksTotal).format('1,000.00');
+
   divider();
-  console.log(`Stocks Total: $${colorize(stocksColor, stocksTotal.padStart(10))}`);
-  divider();
-  console.log(`Grand Total:  $${colorize(grandColor, grandTotal.padStart(10))}`);
+  console.log(`Total:     |   ${colorize(stocksColor, stocksTotal.padStart(10))}`);
   divider();
   console.log();
 }
