@@ -1,3 +1,4 @@
+const yargs = require('yargs');
 const moment = require('moment');
 const yahooFinance = require('yahoo-finance');
 const numeral = require('numeral');
@@ -5,10 +6,28 @@ const columnify = require('columnify')
 const fs = require('fs');
 global.fetch = require('node-fetch');
 
-const portfolio = require("./portfolio.json");
-const lastPortfolio = require("./last-portfolio.json");
 const date = moment().format('MM/DD/YYYY hh:mm');
 const width = 25;
+
+const argv = yargs
+  .options({
+    s: {
+      demand: false,
+      alias: 'stocks',
+      describe: 'name of .json stock list to fetch data for',
+      string: true
+    }
+  })
+  .help()
+  .alias('help', 'h')
+  .argv;
+
+const file = argv.stocks ? argv.stocks : 'portfolio.json';
+const lastfile = argv.stocks ? 'last-' + argv.stocks.split('.', 1) + '.json' : 'last-portfolio.json';
+const portfolio = require('./' + file);
+const lastPortfolio = require('./' + lastfile);
+
+//import orderBy from 'lodash-es/orderBy';
 
 let stocks = [];
 
@@ -74,7 +93,7 @@ let log = (stockData) => {
     let padding = width - (stock.length + stockData[stock].price.regularMarketPrice.length);
     let price = numeral(stockData[stock].price.regularMarketPrice).format('1,000.00');
     let leftPad =  10 - stock.length;
-    let lastPrice = (lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
+    let lastPrice = (lastPortfolio.stocks && lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
 
     stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
@@ -94,7 +113,7 @@ let log = (stockData) => {
     'grandTotal': parseFloat(numeral(stocksTotal).format('1000.00'))
   };
   let jsonData = JSON.stringify(lastData, null, 2);
-  fs.writeFileSync('last-portfolio.json', jsonData);
+  fs.writeFileSync(lastfile, jsonData);
 
   const lastGrandTotal = lastPortfolio.grandTotal;
   const lastStocksTotal = lastPortfolio.stocksTotal;
