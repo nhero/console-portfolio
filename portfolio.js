@@ -24,8 +24,9 @@ const argv = yargs
 
 const file = argv.stocks ? argv.stocks : 'portfolio.json';
 const lastfile = argv.stocks ? 'last-' + argv.stocks.split('.', 1) + '.json' : 'last-portfolio.json';
-const portfolio = require('./' + file);
-const lastPortfolio = require('./' + lastfile);
+const portfolios = 'portfolios/';
+const portfolio = require('./' + portfolios + file);
+const lastPortfolio = require('./' + portfolios + lastfile);
 
 //import orderBy from 'lodash-es/orderBy';
 
