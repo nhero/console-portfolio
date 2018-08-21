@@ -1,0 +1,10 @@
+{
+  "stocks": {
+    "SPY": {
+      "quantity": 1
+    },
+    "GOOG": {
+      "quantity": 1
+    }
+  }
+}
