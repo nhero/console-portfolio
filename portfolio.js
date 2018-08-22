@@ -60,16 +60,17 @@ let getStocks = yahooFinance.quote({
   return quotes;
 });
 
-let getColor = (lastPrice, price) => {
+let getColor = (price, lastPrice) => {
+  price = parseFloat(price);
+  lastPrice = parseFloat(lastPrice);
   switch(true) {
-    case (lastPrice
-      == null):
+    case (lastPrice == null):
       color = 'none';
       break;
-    case (lastPrice > price):
+    case (price < lastPrice):
       color = 'red';
       break;
-    case lastPrice < price:
+    case (price > lastPrice):
       color = 'green';
       break;
     case lastPrice == price:
@@ -94,14 +95,17 @@ let log = (stockData) => {
     let price = numeral(stockData[stock].price.regularMarketPrice).format('1,000.00');
     let leftPad =  10 - stock.length;
     let lastPrice = (lastPortfolio.stocks && lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
+    let purchasePrice = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['purchase-price']) ? portfolio.stocks[stock]['purchase-price'] : null;
 
     stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
     };
 
-    let color = getColor(lastPrice, price.replace(/[^\d\.]/g,''));
+    let lastColor = getColor(price.replace(/[^\d\.]/g,''), lastPrice);
+    let purchaseColor = getColor(price.replace(/[^\d\.]/g,''), purchasePrice);
+
     price += '';
-    console.log(`${stock.padEnd(10)} | ${colorize(color, price.padStart(12))}`);
+    console.log(`${colorize(purchaseColor, stock.padEnd(10))} | ${colorize(lastColor, price.padStart(12))}`);
     if (portfolio.stocks[stock]['quantity']) {
       stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
     }
