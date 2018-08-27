@@ -11,26 +11,44 @@ const width = 25;
 
 const argv = yargs
   .options({
+    p: {
+      demand: false,
+      alias: 'portfolio',
+      describe: 'name of .json portfolio to fetch data for',
+      string: true,
+      default: 'portfolio.json'
+    },
     s: {
       demand: false,
-      alias: 'stocks',
-      describe: 'name of .json stock list to fetch data for',
-      string: true
-    }
+      alias: 'sort',
+      describe: 'sort portfolio by stock, quantity and purchasePrice',
+      string: true,
+      default: 'stock'
+    },
+    sd: {
+      demand: false,
+      alias: 'sortDirection',
+      describe: 'sort direction asc or desc',
+      string: true,
+      default: 'asc'
+    },
   })
   .help()
   .alias('help', 'h')
   .argv;
 
-const file = argv.stocks ? argv.stocks : 'portfolio.json';
+const file = argv.portfolio;
+const sort = argv.sort;
+const sortDirection = argv.sortDirection;
 const lastfile = argv.stocks ? 'last-' + argv.stocks.split('.', 1) + '.json' : 'last-portfolio.json';
 const portfolios = 'portfolios/';
 const portfolio = require('./' + portfolios + file);
 const lastPortfolio = require('./' + portfolios + lastfile);
 
-//import orderBy from 'lodash-es/orderBy';
+const orderBy = require('lodash.orderby');
 
 let stocks = [];
+let mappedStocks = [];
 
 let divider = () => {
   console.log('-'.repeat(width));
@@ -49,8 +67,14 @@ let colorize = (color, str) => {
 
 if (portfolio.hasOwnProperty('stocks')) {
   for(let stock in portfolio.stocks) {
-    stocks.push(stock);
+    mappedStocks.push({
+      stock: stock,
+      purchasePrice: portfolio.stocks[stock]['purchase-price'],
+      quantity: portfolio.stocks[stock]['quantity'],
+    });
   }
+  const test = orderBy(mappedStocks, [sort], [sortDirection]);
+  stocks = test.map(a => a.stock);
 }
 
 let getStocks = yahooFinance.quote({
@@ -96,6 +120,7 @@ let log = (stockData) => {
     let leftPad =  10 - stock.length;
     let lastPrice = (lastPortfolio.stocks && lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
     let purchasePrice = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['purchase-price']) ? portfolio.stocks[stock]['purchase-price'] : null;
+    let quantity = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['quantity']) ? portfolio.stocks[stock]['quantity'] : null;
 
     stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
@@ -120,7 +145,7 @@ let log = (stockData) => {
   fs.writeFileSync(portfolios + lastfile, jsonData);
 
   const lastStocksTotal = lastPortfolio.stocksTotal;
-  let stocksColor = getColor(lastStocksTotal, stocksTotal);
+  let stocksColor = getColor(stocksTotal, lastStocksTotal);
   stocksTotal = numeral(stocksTotal).format('1,000.00');
 
   divider();
