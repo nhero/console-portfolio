@@ -7,7 +7,7 @@ const fs = require('fs');
 global.fetch = require('node-fetch');
 
 const date = moment().format('MM/DD/YYYY hh:mm');
-const width = 25;
+const width = 31;
 
 const argv = yargs
   .options({
@@ -110,17 +110,20 @@ let getColor = (price, lastPrice) => {
 let log = (stockData) => {
   console.log();
   divider();
-  console.log(`${'Date:'.padEnd(8)} ${date}`);
+  console.log(`${'Date:'.padEnd(14)} ${date}`);
   divider();
   let stocks = {};
   let stocksTotal = 0;
+  let totalPurchasePrice = 0;
   for(let stock in stockData) {
     let padding = width - (stock.length + stockData[stock].price.regularMarketPrice.length);
     let price = numeral(stockData[stock].price.regularMarketPrice).format('1,000.00');
     let leftPad =  10 - stock.length;
     let lastPrice = (lastPortfolio.stocks && lastPortfolio.stocks[stock] && lastPortfolio.stocks[stock].lastPrice) ? lastPortfolio.stocks[stock].lastPrice : null;
-    let purchasePrice = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['purchase-price']) ? portfolio.stocks[stock]['purchase-price'] : null;
-    let quantity = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['quantity']) ? portfolio.stocks[stock]['quantity'] : null;
+    let purchasePrice = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['purchase-price']) ? portfolio.stocks[stock]['purchase-price'] : 0;
+    let quantity = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['quantity']) ? portfolio.stocks[stock]['quantity'] : 0;
+    totalPurchasePrice += purchasePrice * quantity;
+    gainLoss = numeral((price * quantity) - (purchasePrice * quantity)).format('1,000.00');
 
     stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
@@ -129,8 +132,7 @@ let log = (stockData) => {
     let lastColor = getColor(price.replace(/[^\d\.]/g,''), lastPrice);
     let purchaseColor = getColor(price.replace(/[^\d\.]/g,''), purchasePrice);
 
-    price += '';
-    console.log(`${colorize(purchaseColor, stock.padEnd(10))} | ${colorize(lastColor, price.padStart(12))}`);
+    console.log(`${colorize(purchaseColor, stock.padEnd(5))} ${quantity.toString().padStart(6)} ${colorize(lastColor, price.padStart(7))} ${colorize(purchaseColor, gainLoss.padStart(10))}`);
     if (portfolio.stocks[stock]['quantity']) {
       stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
     }
@@ -145,11 +147,16 @@ let log = (stockData) => {
   fs.writeFileSync(portfolios + lastfile, jsonData);
 
   const lastStocksTotal = lastPortfolio.stocksTotal;
+
   let stocksColor = getColor(stocksTotal, lastStocksTotal);
+  let gainColor = getColor(stocksTotal, totalPurchasePrice);
+  const totalGain = parseFloat(numeral(stocksTotal - totalPurchasePrice).format('1000.00')) + '';
+
   stocksTotal = numeral(stocksTotal).format('1,000.00');
 
   divider();
-  console.log(`Total:     |   ${colorize(stocksColor, stocksTotal.padStart(10))}`);
+  console.log(`+/-            ${colorize(gainColor, totalGain.padStart(16))}`);
+  //console.log(`Total:         ${colorize(stocksColor, stocksTotal.padStart(10))}`);
   divider();
   console.log();
 }
