@@ -151,11 +151,12 @@ let log = (stockData) => {
   let stocksColor = getColor(stocksTotal, lastStocksTotal);
   let gainColor = getColor(stocksTotal, totalPurchasePrice);
   const totalGain = parseFloat(numeral(stocksTotal - totalPurchasePrice).format('1000.00')) + '';
-
+  let lastDiff = numeral(stocksTotal - lastStocksTotal).format('1.00');
   stocksTotal = numeral(stocksTotal).format('1,000.00');
 
   divider();
-  console.log(`+/-            ${colorize(gainColor, totalGain.padStart(16))}`);
+  console.log(`Last  +/-      ${colorize(stocksColor, lastDiff.padStart(16))}`);
+  console.log(`Total +/-      ${colorize(gainColor, totalGain.padStart(16))}`);
   //console.log(`Total:         ${colorize(stocksColor, stocksTotal.padStart(10))}`);
   divider();
   console.log();
