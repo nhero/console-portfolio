@@ -133,7 +133,7 @@ let log = (stockData) => {
     let lastColor = getColor(price.replace(/[^\d\.]/g,''), lastPrice);
     let purchaseColor = getColor(price.replace(/[^\d\.]/g,''), purchasePrice);
 
-    console.log(`${colorize(purchaseColor, stock.padEnd(5))} ${quantity.toString().padStart(6)} ${colorize(lastColor, price.padStart(7))} ${colorize(purchaseColor, lastGainLoss.padStart(8))} ${colorize(purchaseColor, gainLoss.padStart(10))}`);
+    console.log(`${colorize(purchaseColor, stock.padEnd(5))} ${quantity.toString().padStart(6)} ${colorize(lastColor, price.padStart(7))} ${colorize(lastColor, lastGainLoss.padStart(8))} ${colorize(purchaseColor, gainLoss.padStart(10))}`);
     if (portfolio.stocks[stock]['quantity']) {
       stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
     }
