@@ -7,7 +7,7 @@ const fs = require('fs');
 global.fetch = require('node-fetch');
 
 const date = moment().format('MM/DD/YYYY hh:mm');
-const width = 31;
+const width = 40;
 
 const argv = yargs
   .options({
@@ -123,7 +123,8 @@ let log = (stockData) => {
     let purchasePrice = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['purchase-price']) ? portfolio.stocks[stock]['purchase-price'] : 0;
     let quantity = (portfolio.stocks && portfolio.stocks[stock] && portfolio.stocks[stock]['quantity']) ? portfolio.stocks[stock]['quantity'] : 0;
     totalPurchasePrice += purchasePrice * quantity;
-    gainLoss = numeral((price * quantity) - (purchasePrice * quantity)).format('1,000.00');
+    let gainLoss = numeral((price * quantity) - (purchasePrice * quantity)).format('1,000.00');
+    let lastGainLoss = numeral((price * quantity) - (lastPrice * quantity)).format('1,000.00');
 
     stocks[stock] = {
       "lastPrice": parseFloat(price.replace(/[^\d\.]/g,''))
@@ -132,7 +133,7 @@ let log = (stockData) => {
     let lastColor = getColor(price.replace(/[^\d\.]/g,''), lastPrice);
     let purchaseColor = getColor(price.replace(/[^\d\.]/g,''), purchasePrice);
 
-    console.log(`${colorize(purchaseColor, stock.padEnd(5))} ${quantity.toString().padStart(6)} ${colorize(lastColor, price.padStart(7))} ${colorize(purchaseColor, gainLoss.padStart(10))}`);
+    console.log(`${colorize(purchaseColor, stock.padEnd(5))} ${quantity.toString().padStart(6)} ${colorize(lastColor, price.padStart(7))} ${colorize(purchaseColor, lastGainLoss.padStart(8))} ${colorize(purchaseColor, gainLoss.padStart(10))}`);
     if (portfolio.stocks[stock]['quantity']) {
       stocksTotal += portfolio.stocks[stock]['quantity'] * price.replace(/[^\d\.]/g,'');
     }
@@ -150,14 +151,12 @@ let log = (stockData) => {
 
   let stocksColor = getColor(stocksTotal, lastStocksTotal);
   let gainColor = getColor(stocksTotal, totalPurchasePrice);
-  const totalGain = parseFloat(numeral(stocksTotal - totalPurchasePrice).format('1000.00')) + '';
+  const totalGain = numeral(stocksTotal - totalPurchasePrice).format('1,000.00');
   let lastDiff = numeral(stocksTotal - lastStocksTotal).format('1.00');
   stocksTotal = numeral(stocksTotal).format('1,000.00');
 
   divider();
-  console.log(`Last  +/-      ${colorize(stocksColor, lastDiff.padStart(16))}`);
-  console.log(`Total +/-      ${colorize(gainColor, totalGain.padStart(16))}`);
-  //console.log(`Total:         ${colorize(stocksColor, stocksTotal.padStart(10))}`);
+  console.log(`Total +/-    ${colorize(stocksColor, lastDiff.padStart(16))}  ${colorize(gainColor, totalGain.padStart(9))}`);
   divider();
   console.log();
 }
