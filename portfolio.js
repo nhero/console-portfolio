@@ -2,7 +2,6 @@ const yargs = require('yargs');
 const moment = require('moment');
 const yahooFinance = require('yahoo-finance');
 const numeral = require('numeral');
-const columnify = require('columnify');
 const fs = require('fs');
 global.fetch = require('node-fetch');
 
