@@ -1,10 +1,20 @@
 {
   "stocks": {
-    "SPY": {
-      "quantity": 1
-    },
-    "GOOG": {
-      "quantity": 1
-    }
+    "SPY": [
+      {
+        "quantity": 1,
+        "purchase-price": "275.00"
+      }
+    ],
+    "GOOG": [
+      {
+        "quantity": 1,
+        "purchase-price": "1000.00"
+      },
+      {
+        "quantity": 2,
+        "purchase-price": "500.00"
+      }
+    ]
   }
 }
