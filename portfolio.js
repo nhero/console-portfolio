@@ -14,22 +14,22 @@ const argv = yargs
       alias: "portfolio",
       describe: "name of .json portfolio to fetch data for",
       string: true,
-      default: "portfolio.json"
+      default: "portfolio.json",
     },
     s: {
       demand: false,
       alias: "sort",
       describe: "sort portfolio by stock, quantity and purchasePrice",
       string: true,
-      default: "stock"
+      default: "stock",
     },
     sd: {
       demand: false,
       alias: "sortDirection",
       describe: "sort direction asc or desc",
       string: true,
-      default: "asc"
-    }
+      default: "asc",
+    },
   })
   .help()
   .alias("help", "h").argv;
@@ -45,7 +45,7 @@ const portfolio = require("./" + portfolios + file);
 const lastPortfolio = require("./" + portfolios + lastfile);
 
 const orderBy = require("lodash.orderby");
-const colLengths = [6, 8, 10, 9, 7, 9, 11, 11];
+const colLengths = [6, 8, 10, 9, 7, 9, 11, 11, 11];
 const width = colLengths.reduce((sum, x) => sum + x);
 const calculatedValues = [];
 
@@ -60,11 +60,11 @@ const ansi = {
   green: "\x1B[32m",
   red: "\x1B[31m",
   yellow: "\x1B[33m",
-  none: "\x1B[0m"
+  none: "\x1B[0m",
 };
 const blankColumn = {
   value: "",
-  color: "none"
+  color: "none",
 };
 
 let colorize = (color, str) => {
@@ -82,25 +82,25 @@ if (portfolio.hasOwnProperty("stocks")) {
     const reducedStock = arrayOfStock.reduce((a, b) => ({
       quantity: a.quantity + b.quantity,
       "purchase-price": a["purchase-price"] + b["purchase-price"] * b.quantity,
-      test: a.test + b.quantity
+      test: a.test + b.quantity,
     }));
     /// ****
     mappedStocks.push({
       stock: stock,
       purchasePrice: reducedStock["purchase-price"],
-      quantity: parseFloat(reducedStock.quantity)
+      quantity: parseFloat(reducedStock.quantity),
     });
   }
   const sortedStocks = orderBy(mappedStocks, [sort], [sortDirection]);
-  stocks = sortedStocks.map(a => a.stock);
+  stocks = sortedStocks.map((a) => a.stock);
 }
 
 let getStocks = yahooFinance.quote(
   {
     symbols: stocks,
-    modules: ["price", "summaryDetail"]
+    modules: ["price", "summaryDetail"],
   },
-  function(err, quotes) {
+  function (err, quotes) {
     return quotes;
   }
 );
@@ -136,7 +136,8 @@ let columize = (
   col5 = blankColumn,
   col6 = blankColumn,
   col7 = blankColumn,
-  col8 = blankColumn
+  col8 = blankColumn,
+  col9 = blankColumn
 ) => {
   const row =
     colorize(col1.color, col1.value.padEnd(colLengths[0])) +
@@ -146,7 +147,8 @@ let columize = (
     colorize(col5.color, col5.value.padStart(colLengths[4])) +
     colorize(col6.color, col6.value.padStart(colLengths[5])) +
     colorize(col7.color, col7.value.padStart(colLengths[6])) +
-    colorize(col8.color, col8.value.padStart(colLengths[7]));
+    colorize(col8.color, col8.value.padStart(colLengths[7])) +
+    colorize(col9.color, col9.value.padStart(colLengths[8]));
   console.log(row);
 };
 
@@ -163,6 +165,7 @@ let render = (calculatedValues, totals) => {
     { value: "%" },
     { value: "Day +/-" },
     { value: "Cur +/-" },
+    { value: "Day $ +/-" },
     { value: "Total +/-" }
   );
   divider();
@@ -175,7 +178,8 @@ let render = (calculatedValues, totals) => {
       row.col5,
       row.col6,
       row.col7,
-      row.col8
+      row.col8,
+      row.col9
     );
   }
   divider();
@@ -187,18 +191,20 @@ let render = (calculatedValues, totals) => {
     totals[4],
     totals[5],
     totals[6],
-    totals[7]
+    totals[7],
+    totals[8]
   );
   divider();
   console.log();
 };
 
-let log = stockData => {
+let log = (stockData) => {
   let stocks = {};
   let stocksTotal = 0;
   let daysGainLossTotal = 0;
   let totalPurchasePrice = 0;
   for (let stock in stockData) {
+    //console.log("stock", stock, stockData[stock]);
     let price = numeral(stockData[stock].price.regularMarketPrice).format(
       "1,000.00"
     );
@@ -211,6 +217,23 @@ let log = stockData => {
     let yesterdaysPrice = stockData[stock].price.regularMarketPreviousClose
       ? stockData[stock].price.regularMarketPreviousClose
       : null;
+    let todaysPriceGainLoss =
+      stockData[stock].price.regularMarketPrice &&
+      stockData[stock].price.regularMarketOpen
+        ? numeral(
+            stockData[stock].price.regularMarketPrice -
+              stockData[stock].price.regularMarketOpen
+          ).format("1,000.00")
+        : null;
+    console.log(
+      stock,
+      lastPrice,
+      todaysPriceGainLoss,
+      yesterdaysPrice,
+      stockData[stock].price.regularMarketPrice,
+      stockData[stock].price.regularMarketOpen,
+      todaysPriceGainLoss
+    );
 
     for (let [index, purchasedStocks] of portfolio.stocks[stock].entries()) {
       let purchasePrice =
@@ -227,16 +250,19 @@ let log = stockData => {
           : 0;
       totalPurchasePrice += purchasePrice * quantity;
       let gainLoss = numeral(
-        price * quantity - purchasePrice * quantity
+        parseFloat(price.replace(/[^\d\.]/g, "")) * quantity -
+          purchasePrice * quantity
       ).format("1,000.00");
       let lastGainLoss = numeral(
-        price * quantity - lastPrice * quantity
+        parseFloat(price.replace(/[^\d\.]/g, "")) * quantity -
+          lastPrice * quantity
       ).format("1,000.00");
       let yesterdayGainLoss = numeral(
-        price * quantity - yesterdaysPrice * quantity
+        parseFloat(price.replace(/[^\d\.]/g, "")) * quantity -
+          yesterdaysPrice * quantity
       ).format("1,000.00");
       stocks[stock] = {
-        lastPrice: parseFloat(price.replace(/[^\d\.]/g, ""))
+        lastPrice: parseFloat(price.replace(/[^\d\.]/g, "")),
       };
 
       let lastColor = getColor(price.replace(/[^\d\.]/g, ""), lastPrice);
@@ -253,38 +279,42 @@ let log = stockData => {
       let vals = {
         col1: {
           value: stock,
-          color: purchaseColor
+          color: purchaseColor,
         },
         col2: {
-          value: numeral(quantity.toString()).format("1,000.00")
+          value: numeral(quantity.toString()).format("1,000.00"),
         },
         col3: {
-          value: numeral(purchasePrice.toString()).format("1,000.00")
+          value: numeral(purchasePrice.toString()).format("1,000.00"),
         },
         col4: {
           value: price,
-          color: lastColor
+          color: lastColor,
         },
         col5: {
           value: numeral(percentChange.toString()).format("0.0"),
-          color: purchaseColor
+          color: purchaseColor,
         },
         col6: {
           value: price,
-          color: lastColor
+          color: lastColor,
         },
         col6: {
           value: yesterdayGainLoss,
-          color: yesterdayGainLossColor
+          color: yesterdayGainLossColor,
         },
         col7: {
           value: lastGainLoss,
-          color: lastColor
+          color: lastColor,
         },
         col8: {
+          value: todaysPriceGainLoss,
+          color: yesterdayGainLossColor,
+        },
+        col9: {
           value: gainLoss,
-          color: purchaseColor
-        }
+          color: purchaseColor,
+        },
       };
       calculatedValues.push(vals);
       if (portfolio.stocks[stock][index]["quantity"]) {
@@ -299,7 +329,7 @@ let log = stockData => {
   lastData = {
     stocks,
     stocksTotal: stocksTotal,
-    grandTotal: parseFloat(numeral(stocksTotal).format("1000.00"))
+    grandTotal: parseFloat(numeral(stocksTotal).format("1000.00")),
   };
   let jsonData = JSON.stringify(lastData, null, 2);
   fs.writeFileSync(portfolios + lastfile, jsonData);
@@ -322,19 +352,20 @@ let log = stockData => {
     { value: "" },
     {
       value: numeral(daysGainLossTotal).format("1,000.00"),
-      color: getColor(daysGainLossTotal, 0)
+      color: getColor(daysGainLossTotal, 0),
     },
     { value: lastDiff, color: stocksColor },
-    { value: totalGain, color: gainColor }
+    { value: "" },
+    { value: totalGain, color: gainColor },
   ];
 
   render(calculatedValues, totals);
 };
 
 Promise.all([getStocks])
-  .then(function([stockData]) {
+  .then(function ([stockData]) {
     log(stockData);
   })
-  .catch(function(err) {
+  .catch(function (err) {
     console.error("Promise.all error", err);
   });
