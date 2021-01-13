@@ -14,7 +14,7 @@ const argv = yargs
       alias: "portfolio",
       describe: "name of .json portfolio to fetch data for",
       string: true,
-      default: "portfolio.json",
+      default: "portfolio",
     },
     s: {
       demand: false,
@@ -34,16 +34,13 @@ const argv = yargs
   .help()
   .alias("help", "h").argv;
 
-const file = argv.portfolio;
+const file = argv.portfolio + '.json';
 const sort = argv.sort;
 const sortDirection = argv.sortDirection;
-const lastfile = argv.stocks
-  ? "last-" + argv.stocks.split(".", 1) + ".json"
-  : "last-portfolio.json";
+const lastfile = "last-" + file;
 const portfolios = "portfolios/";
 const portfolio = require("./" + portfolios + file);
 const lastPortfolio = require("./" + portfolios + lastfile);
-
 const orderBy = require("lodash.orderby");
 const colLengths = [6, 8, 10, 9, 7, 9, 11, 11, 11];
 const width = colLengths.reduce((sum, x) => sum + x);
@@ -84,7 +81,6 @@ if (portfolio.hasOwnProperty("stocks")) {
       "purchase-price": a["purchase-price"] + b["purchase-price"] * b.quantity,
       test: a.test + b.quantity,
     }));
-    /// ****
     mappedStocks.push({
       stock: stock,
       purchasePrice: reducedStock["purchase-price"],
@@ -204,7 +200,6 @@ let log = (stockData) => {
   let daysGainLossTotal = 0;
   let totalPurchasePrice = 0;
   for (let stock in stockData) {
-    //console.log("stock", stock, stockData[stock]);
     let price = numeral(stockData[stock].price.regularMarketPrice).format(
       "1,000.00"
     );
@@ -225,15 +220,6 @@ let log = (stockData) => {
               stockData[stock].price.regularMarketOpen
           ).format("1,000.00")
         : null;
-    console.log(
-      stock,
-      lastPrice,
-      todaysPriceGainLoss,
-      yesterdaysPrice,
-      stockData[stock].price.regularMarketPrice,
-      stockData[stock].price.regularMarketOpen,
-      todaysPriceGainLoss
-    );
 
     for (let [index, purchasedStocks] of portfolio.stocks[stock].entries()) {
       let purchasePrice =
@@ -317,11 +303,12 @@ let log = (stockData) => {
         },
       };
       calculatedValues.push(vals);
+
       if (portfolio.stocks[stock][index]["quantity"]) {
         stocksTotal +=
           portfolio.stocks[stock][index]["quantity"] *
           price.replace(/[^\d\.]/g, "");
-        daysGainLossTotal += parseFloat(yesterdayGainLoss);
+        daysGainLossTotal += parseFloat(numeral(yesterdayGainLoss).format('0.0'));
       }
     }
   }
