@@ -19,9 +19,9 @@ const argv = yargs
     s: {
       demand: false,
       alias: "sort",
-      describe: "sort portfolio by stock, quantity and purchasePrice",
+      describe: "sort portfolio by column",
       string: true,
-      default: "stock",
+      default: "col1",
     },
     sd: {
       demand: false,
@@ -34,7 +34,7 @@ const argv = yargs
   .help()
   .alias("help", "h").argv;
 
-const file = argv.portfolio + '.json';
+const file = argv.portfolio + ".json";
 const sort = argv.sort;
 const sortDirection = argv.sortDirection;
 const lastfile = "last-" + file;
@@ -87,8 +87,8 @@ if (portfolio.hasOwnProperty("stocks")) {
       quantity: parseFloat(reducedStock.quantity),
     });
   }
-  const sortedStocks = orderBy(mappedStocks, [sort], [sortDirection]);
-  stocks = sortedStocks.map((a) => a.stock);
+
+  stocks = mappedStocks.map((a) => a.stock);
 }
 
 let getStocks = yahooFinance.quote(
@@ -260,7 +260,11 @@ let log = (stockData) => {
         price.replace(/[^\d\.]/g, ""),
         yesterdaysPrice
       );
-      let percentChange = ((price - purchasePrice) / purchasePrice) * 100;
+      let percentChange =
+        ((price.replace(/[^\d\.]/g, "") -
+          purchasePrice.replace(/[^\d\.]/g, "")) /
+          purchasePrice.replace(/[^\d\.]/g, "")) *
+        100;
 
       let vals = {
         col1: {
@@ -308,7 +312,9 @@ let log = (stockData) => {
         stocksTotal +=
           portfolio.stocks[stock][index]["quantity"] *
           price.replace(/[^\d\.]/g, "");
-        daysGainLossTotal += parseFloat(numeral(yesterdayGainLoss).format('0.0'));
+        daysGainLossTotal += parseFloat(
+          numeral(yesterdayGainLoss).format("0.0")
+        );
       }
     }
   }
@@ -346,7 +352,21 @@ let log = (stockData) => {
     { value: totalGain, color: gainColor },
   ];
 
-  render(calculatedValues, totals);
+  let sortedStocks;
+
+  if (sort === "col1") {
+    sortedStocks = orderBy(calculatedValues, (stock) => stock[sort].value, [
+      sortDirection,
+    ]);
+  } else {
+    sortedStocks = orderBy(
+      calculatedValues,
+      (stock) => parseFloat(stock[sort].value.replace(",", "")),
+      [sortDirection]
+    );
+  }
+
+  render(sortedStocks, totals);
 };
 
 Promise.all([getStocks])
